@@ -1,0 +1,17 @@
+name: simple_app_state
+description: "A package for state management and state persistence in Flutter apps."
+version: 0.0.1
+repository: https://github.com/MasahideMori-SimpleAppli/simple_app_state
+
+environment:
+  sdk: ^3.9.2
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  simple_lint: ^1.0.0
