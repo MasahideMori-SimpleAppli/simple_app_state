@@ -88,6 +88,8 @@ class SimpleAppState extends CloneableFile {
   /// * [caster] : Optional function to convert a raw value retrieved from
   /// storage to the expected type `T`. This is required for typed collections.
   ///
+  /// ---
+  ///
   /// caster examples:
   ///
   /// `List<T>`:
@@ -95,7 +97,7 @@ class SimpleAppState extends CloneableFile {
   /// // List<String>
   /// slot<List<String>>(
   ///   'names',
-  ///   caster: (raw) => (raw as List).cast<String>(),
+  ///   caster: (raw) => raw != null ? (raw as List).cast<String>() : null,
   /// );
   /// ```
   ///
@@ -104,13 +106,15 @@ class SimpleAppState extends CloneableFile {
   /// // Map<String, List<String>>
   /// slot<Map<String, List<String>>>(
   ///   'complex',
-  ///   caster: (raw) => (raw as Map<String, dynamic>).map(
-  ///     (k, v) => MapEntry(k, (v as List).cast<String>()),
-  ///   ),
+  ///   caster: (raw) => raw != null ? (raw as Map<String, dynamic>).map(
+  ///       (k, v) => MapEntry(k, (v as List).cast<String>()),
+  ///   ) : null,
   /// );
   /// ```
   ///
-  /// Example:
+  /// ---
+  ///
+  /// slot creation example:
   /// ```dart
   /// final state = SimpleAppState(null);
   /// final count = state.slot<int>('count', initial: 0);

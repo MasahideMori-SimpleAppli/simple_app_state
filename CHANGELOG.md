@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Improved examples and code documentation.
+
 ## 0.0.2
 
 * Fixed an issue where a type error would occur at runtime when using collections of certain types.

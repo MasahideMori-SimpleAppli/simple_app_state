@@ -1,9 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:simple_app_state/simple_app_state.dart';
-
-void main() {
-  runApp(const MyApp());
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -24,8 +21,21 @@ final countSlot = appState.slot<int>('count', initial: 0);
 final logsSlot = appState.slot<List<String>>(
   'logs',
   initial: [],
-  caster: (v) => (v as List).cast<String>(),
+  caster: (raw) => raw != null ? (raw as List).cast<String>() : null,
 );
+
+void main() {
+  /// You can easily define a debugger to use only during development.
+  if (kDebugMode) {
+    appState.setDebugListener((slot, oldV, newV) {
+      /// You can also use slot.name here to print only in a specific slot.
+      debugPrint(
+        "Changed Slot:${slot.name}, Value changed from:$oldV, to:$newV",
+      );
+    });
+  }
+  runApp(const MyApp());
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
