@@ -1,5 +1,28 @@
 # SimpleAppState
 
+```text
+Application State Flow (SimpleAppState)
+
+┌──────────────────────────┐
+│      SimpleAppState      │
+│  (global, explicit)      │
+│                          │
+│  - Batch updates         │
+│  - Undo / Redo           │
+│  - Persistence           │
+└───────────┬──────────────┘
+            │ owns
+     ┌──────▼──────┐
+     │ StateSlot<T>│
+     │ (typed)     │
+     └──────┬──────┘
+            │ subscribe
+   ┌────────▼────────┐
+   │   Widgets       │
+   │ (no ownership)  │
+   └─────────────────┘
+```
+
 SimpleAppState is a **state-first** state management library for Flutter.
 
 It is designed to help teams build applications where:
@@ -62,14 +85,12 @@ Create a single `SimpleAppState` instance.
 In most apps, this object lives for the entire app lifetime.
 
 ```dart
-
 final appState = SimpleAppState();
 ```
 
 Define all state slots in the same file:
 
 ```dart
-
 final count = appState.slot<int>('count', initial: 0);
 ```
 
@@ -169,7 +190,6 @@ Application state must live outside widgets.
 ✅ **Correct**
 
 ```dart
-
 final appState = SimpleAppState();
 final count = appState.slot<int>('count', initial: 0);
 ```
