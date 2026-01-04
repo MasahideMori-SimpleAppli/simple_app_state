@@ -268,7 +268,7 @@ Undo and redo simply restore previous snapshots:
 ```text
 final prev = fsm.undo();
 fsm.skipNextPush();
-state.replaceDataFrom(prev);
+state.replaceDataFrom(prev as SimpleAppState);
 ```
 
 ### Why this works so well
