@@ -10,8 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  file_state_manager: ^3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  simple_lint: ^1.0.0
+  simple_lint: ^2.0.0
