@@ -1,4 +1,5 @@
 import 'package:file_state_manager/file_state_manager.dart';
+import 'package:simple_app_state/simple_app_state.dart';
 
 class UtilCopy {
   static final int _maxDepth = 100; // 安全な再帰深度上限
@@ -154,8 +155,9 @@ class UtilCopy {
   /// * [context] : Error text.
   /// * [depth] : This is an internal parameter to limit recursive calls.
   /// Do not set this when using from outside.
-  static void validateJsonableOrClonableFile(
-    dynamic value, {
+  static void validateJsonableOrClonableFile<T>(
+    dynamic value,
+    StateSlot<T> key, {
     String? context,
     int depth = 0,
   }) {
@@ -164,18 +166,34 @@ class UtilCopy {
         '${context ?? "value"} exceeded max allowed nesting depth',
       );
     }
+    // Typed List requires caster
+    if (value != null && key.caster == null && _isTypedCollection<T>()) {
+      throw ArgumentError(
+        'StateSlot "${key.name}" requires a caster for type $T',
+      );
+    }
     if (value == null) return;
     if (value is String || value is num || value is bool) return;
     if (value is CloneableFile) return;
     if (value is Map<String, dynamic>) {
       for (final v in value.values) {
-        validateJsonableOrClonableFile(v, context: context, depth: depth + 1);
+        validateJsonableOrClonableFile(
+          v,
+          key,
+          context: context,
+          depth: depth + 1,
+        );
       }
       return;
     }
     if (value is List) {
       for (final v in value) {
-        validateJsonableOrClonableFile(v, context: context, depth: depth + 1);
+        validateJsonableOrClonableFile(
+          v,
+          key,
+          context: context,
+          depth: depth + 1,
+        );
       }
       return;
     }
@@ -183,5 +201,10 @@ class UtilCopy {
       'Invalid value type for ${context ?? "state"}: '
       '${value.runtimeType}',
     );
+  }
+
+  static bool _isTypedCollection<T>() {
+    final t = T.toString();
+    return t.startsWith('List<') && t != 'List<dynamic>';
   }
 }

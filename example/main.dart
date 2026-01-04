@@ -21,7 +21,11 @@ final appState = SimpleAppState();
 final countSlot = appState.slot<int>('count', initial: 0);
 
 /// log（`List<String>`）
-final logsSlot = appState.slot<List<String>>('logs', initial: []);
+final logsSlot = appState.slot<List<String>>(
+  'logs',
+  initial: [],
+  caster: (v) => (v as List).cast<String>(),
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///

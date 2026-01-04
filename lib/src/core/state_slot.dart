@@ -2,9 +2,10 @@ part of 'simple_app_state_core.dart';
 
 class StateSlot<T> {
   static const String className = "StateSlot";
-  static const String version = "1";
+  static const String version = "2";
   final String name;
   final SimpleAppState state;
+  final T? Function(dynamic value)? caster;
 
   /// (en) Do not call this constructor directly.
   /// It is designed to be called internally by SimpleAppState.
@@ -15,7 +16,9 @@ class StateSlot<T> {
   /// * [name] : The slot name. This name will be thrown if an error occurs,
   /// so do not put any confidential information in it.
   /// * [state] : The parent state class that manages this slot.
-  StateSlot._(this.name, this.state);
+  /// * [caster] : Optional function to convert a raw value retrieved from
+  /// storage to the expected type `T`. This is required for typed collections.
+  StateSlot._(this.name, this.state, {this.caster});
 
   T? get() => state._get<T>(this);
 
@@ -28,10 +31,6 @@ class StateSlot<T> {
   /// * [value] : The value to set. Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be set.
   StateSlot<T> set(T? value) {
-    UtilCopy.validateJsonableOrClonableFile(
-      value,
-      context: 'state slot "$name"',
-    );
     return state._set<T>(this, value);
   }
 
@@ -46,10 +45,6 @@ class StateSlot<T> {
   StateSlot<T> update(T? Function(T? old) builder) {
     final oldValue = state._get<T>(this);
     final newValue = builder(oldValue);
-    UtilCopy.validateJsonableOrClonableFile(
-      newValue,
-      context: 'state slot "$name"',
-    );
     return state._set<T>(this, newValue);
   }
 

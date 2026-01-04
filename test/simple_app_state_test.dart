@@ -83,16 +83,13 @@ void main() {
     test('calls each subscriber only once per batch', () {
       final state = SimpleAppState();
       final slot = state.slot<int>('count');
-
       var called = 0;
       state.addUIListener(slot, 'a', () => called++);
-
       state.batch(() {
         slot.set(1);
         slot.set(2);
         slot.set(3);
       });
-
       expect(called, 1);
     });
 

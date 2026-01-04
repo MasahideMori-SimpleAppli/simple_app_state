@@ -29,7 +29,7 @@ typedef StateListener = void Function(SimpleAppState nowState);
 
 class SimpleAppState extends CloneableFile {
   static const String className = "SimpleAppState";
-  static const String version = "1";
+  static const String version = "2";
   final Map<String, dynamic> _data = {};
 
   // The following are temporary parameters that cannot be deep copied (cloned):
@@ -81,14 +81,45 @@ class SimpleAppState extends CloneableFile {
   ///
   /// * [name] : The slot name. This name will be thrown if an error occurs,
   /// so do not put any confidential information in it.
-  /// * [initial] : Initial value of the slot, used only when no value exists yet.
+  /// * [initial] : Initial value of the slot,
+  /// used only when no value exists yet.
+  /// Note that when you provide a specific type (mainly List),
+  /// you always need to specify a caster.
+  /// * [caster] : Optional function to convert a raw value retrieved from
+  /// storage to the expected type `T`. This is required for typed collections.
+  ///
+  /// caster examples:
+  ///
+  /// `List<T>`:
+  /// ```dart
+  /// // List<String>
+  /// slot<List<String>>(
+  ///   'names',
+  ///   caster: (raw) => (raw as List).cast<String>(),
+  /// );
+  /// ```
+  ///
+  /// `Map<String, T>`:
+  /// ```dart
+  /// // Map<String, List<String>>
+  /// slot<Map<String, List<String>>>(
+  ///   'complex',
+  ///   caster: (raw) => (raw as Map<String, dynamic>).map(
+  ///     (k, v) => MapEntry(k, (v as List).cast<String>()),
+  ///   ),
+  /// );
+  /// ```
   ///
   /// Example:
   /// ```dart
   /// final state = SimpleAppState(null);
   /// final count = state.slot<int>('count', initial: 0);
   /// ```
-  StateSlot<T> slot<T>(String name, {T? initial}) {
+  StateSlot<T> slot<T>(
+    String name, {
+    T? initial,
+    T? Function(dynamic value)? caster,
+  }) {
     final existing = _slots[name];
     if (existing != null) {
       if (existing is! StateSlot<T>) {
@@ -100,11 +131,11 @@ class SimpleAppState extends CloneableFile {
       // 既に値があり、initial は無視
       return existing;
     }
-    final slot = StateSlot<T>._(name, this);
+    final slot = StateSlot<T>._(name, this, caster: caster);
     _slots[name] = slot;
     // 初回作成時のみ初期値をセット
     if (!_data.containsKey(name) && initial != null) {
-      _set<T>(slot, initial);
+      _set(slot, initial);
     }
     return slot;
   }
@@ -214,6 +245,10 @@ class SimpleAppState extends CloneableFile {
   T? _get<T>(StateSlot<T> key) {
     final raw = _data[key.name];
     if (raw == null) return null;
+    if (key.caster != null) {
+      return key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(raw));
+    }
+    // Untyped but safe deep copy (Map<String, dynamic>, List<dynamic>, primitives)
     return UtilCopy.deepCopyJsonableOrClonableFile(raw) as T?;
   }
 
@@ -228,12 +263,27 @@ class SimpleAppState extends CloneableFile {
   StateSlot<T> _set<T>(StateSlot<T> key, T? value) {
     final oldValue = _data[key.name] as T?;
     if (oldValue == value) return key;
-    _data[key.name] = value;
-    _debugListener?.call(
+    // 型チェック
+    UtilCopy.validateJsonableOrClonableFile<T>(
+      value,
       key,
-      UtilCopy.deepCopyJsonableOrClonableFile(oldValue) as T?,
-      UtilCopy.deepCopyJsonableOrClonableFile(value) as T?,
+      context: 'state slot "$key.name"',
     );
+    _data[key.name] = value;
+    if (key.caster != null) {
+      _debugListener?.call(
+        key,
+        key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(oldValue)),
+        key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(value)),
+      );
+    } else {
+      // Untyped but safe deep copy (Map<String, dynamic>, List<dynamic>, primitives)
+      _debugListener?.call(
+        key,
+        UtilCopy.deepCopyJsonableOrClonableFile(oldValue) as T?,
+        UtilCopy.deepCopyJsonableOrClonableFile(value) as T?,
+      );
+    }
     _notify(key);
     return key;
   }
