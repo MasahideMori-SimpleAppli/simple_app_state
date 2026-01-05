@@ -20,6 +20,14 @@ void main() {
       expect(slot.get(), 10);
     });
 
+    test('set and get null value', () {
+      final state = SimpleAppState();
+      final slot = state.slot<int>('count', initial: 0);
+
+      slot.set(null);
+      expect(slot.get(), null);
+    });
+
     test('update uses previous value', () {
       final state = SimpleAppState();
       final slot = state.slot<int>('count', initial: 1);

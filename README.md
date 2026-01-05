@@ -165,9 +165,10 @@ For simple cases, use `StateSlotBuilder`:
 
 ```text
 StateSlotBuilder<int>(
-  slot: count,
-  builder: (context, value) {
-    return Text('Count: ${value ?? 0}');
+  slot: [count],
+  builder: (context) {
+    final value = count.get() ?? 0;
+    return Text('Count: $value');
   },
 );
 ```
@@ -208,7 +209,12 @@ Values are always deep-copied.
 ✅ **Correct**
 
 ```text
-logs.update((old) => [...?old, 'new entry']);
+logs.update((old){
+  final next = List<String>.from(old ?? const []);
+  next.add('new entry');
+  return next;
+});
+
 ```
 
 ---
