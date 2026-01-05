@@ -204,7 +204,7 @@ class SimpleAppState extends CloneableFile {
     list.add(_ListenerEntry(subscriberId, callback));
   }
 
-  /// (ja) Deletes the UI update listener associated with the specified
+  /// (en) Deletes the UI update listener associated with the specified
   /// key and ID.
   /// Normally, you should not use this directly. Instead, consider using
   /// a class that extends SlotStatefulWidget or StateSlotBuilder.

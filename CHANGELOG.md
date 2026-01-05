@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Improved code documentation.
+
 ## 0.0.4
 
 * The README.md has been updated.
