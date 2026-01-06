@@ -109,7 +109,7 @@ count.set(1);
 ```
 
 ```text
-count.update((old) => (old ?? 0) + 1);
+count.update((old) => old + 1);
 ```
 
 - Updates are applied immediately
@@ -136,14 +136,14 @@ class CounterView extends SlotStatefulWidget {
 class _CounterViewState extends SlotState<CounterView> {
   @override
   Widget build(BuildContext context) {
-    final value = count.get() ?? 0;
+    final value = count.get();
 
     return Column(
       children: [
         Text('Count: $value'),
         ElevatedButton(
           onPressed: () {
-            count.update((v) => (v ?? 0) + 1);
+            count.update((v) => v + 1);
           },
           child: const Text('Increment'),
         ),
@@ -167,7 +167,7 @@ For simple cases, use `StateSlotBuilder`:
 StateSlotBuilder<int>(
   slot: [count],
   builder: (context) {
-    final value = count.get() ?? 0;
+    final value = count.get();
     return Text('Count: $value');
   },
 );
@@ -210,7 +210,7 @@ Values are always deep-copied.
 
 ```text
 logs.update((old){
-  final next = List<String>.from(old ?? const []);
+  final next = List<String>.from(old);
   next.add('new entry');
   return next;
 });
@@ -243,6 +243,22 @@ SimpleAppState avoids:
 - implicit lifetimes
 
 If a widget rebuilds, you can always explain **why**.
+
+--- 
+
+### Why there is no "unsafe" API
+
+SimpleAppState does not provide an unsafe escape hatch.
+
+This is a deliberate design choice.
+
+Experience shows that unsafe state access is rarely used "just once" —
+it quickly spreads and breaks assumptions required for
+undo / redo, persistence, and predictable rebuilds.
+
+If some data cannot be safely stored in SimpleAppState,
+it is usually a sign that the data belongs to a widget,
+not to the application state.
 
 ---
 
