@@ -21,7 +21,7 @@ final countSlot = appState.slot<int>('count', initial: 0);
 final logsSlot = appState.slot<List<String>>(
   'logs',
   initial: [],
-  caster: (raw) => raw != null ? (raw as List).cast<String>() : null,
+  caster: (raw) => (raw as List).cast<String>(),
 );
 
 void main() {
@@ -89,10 +89,10 @@ class CounterPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               appState.batch(() {
-                countSlot.update((v) => (v ?? 0) + 1);
+                countSlot.update((v) => v + 1);
 
-                logsSlot.update((list) {
-                  final next = List<String>.from(list ?? const []);
+                logsSlot.update((old) {
+                  final next = List<String>.from(old);
                   next.add('Increment at ${DateTime.now()}');
                   return next;
                 });
@@ -107,7 +107,7 @@ class CounterPage extends StatelessWidget {
             child: StateSlotBuilder(
               slotList: [logsSlot],
               builder: (context) {
-                final items = logsSlot.get() ?? [];
+                final items = logsSlot.get();
                 return ListView.builder(
                   itemCount: items.length,
                   itemBuilder: (context, index) {

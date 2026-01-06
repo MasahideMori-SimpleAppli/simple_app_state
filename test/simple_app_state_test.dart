@@ -9,12 +9,15 @@ void main() {
       final intSlot = state.slot<int>('count', initial: 1);
       expect(intSlot.get(), 1);
 
-      expect(() => state.slot<String>('count'), throwsA(isA<StateError>()));
+      expect(
+        () => state.slot<String>('count', initial: "1"),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('set and get value', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
 
       slot.set(10);
       expect(slot.get(), 10);
@@ -22,7 +25,7 @@ void main() {
 
     test('set and get null value', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count', initial: 0);
+      final slot = state.slot<int?>('count', initial: 0);
 
       slot.set(null);
       expect(slot.get(), null);
@@ -32,7 +35,7 @@ void main() {
       final state = SimpleAppState();
       final slot = state.slot<int>('count', initial: 1);
 
-      slot.update((v) => (v ?? 0) + 1);
+      slot.update((v) => v + 1);
       expect(slot.get(), 2);
     });
   });
@@ -46,11 +49,11 @@ void main() {
         log.add('${key.name}: $oldValue -> $newValue');
       });
 
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
       slot.set(1);
       slot.set(2);
 
-      expect(log, ['count: null -> 1', 'count: 1 -> 2']);
+      expect(log, ['count: 0 -> 1', 'count: 1 -> 2']);
     });
 
     test('reports intermediate mutations during batch', () {
@@ -61,7 +64,7 @@ void main() {
         log.add(newValue as int?);
       });
 
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
 
       state.batch(() {
         slot.set(1);
@@ -76,7 +79,7 @@ void main() {
   group('Batch listener coalescing', () {
     test('calls listener immediately outside batch', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
 
       var called = 0;
       state.addUIListener(slot, 'a', () => called++);
@@ -90,7 +93,7 @@ void main() {
 
     test('calls each subscriber only once per batch', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
       var called = 0;
       state.addUIListener(slot, 'a', () => called++);
       state.batch(() {
@@ -103,8 +106,8 @@ void main() {
 
     test('coalesces notifications across multiple slots per subscriber', () {
       final state = SimpleAppState();
-      final a = state.slot<int>('a');
-      final b = state.slot<int>('b');
+      final a = state.slot<int>('a', initial: 0);
+      final b = state.slot<int>('b', initial: 0);
 
       var called = 0;
       state.addUIListener(a, 'x', () => called++);
@@ -122,7 +125,7 @@ void main() {
   group('StateListener (commit notification)', () {
     test('is called once after non-batch state update', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
 
       var commitCount = 0;
       state.setStateListener((_) => commitCount++);
@@ -136,7 +139,7 @@ void main() {
 
     test('is called once after batch completes', () {
       final state = SimpleAppState();
-      final slot = state.slot<int>('count');
+      final slot = state.slot<int>('count', initial: 0);
 
       var commitCount = 0;
       state.setStateListener((_) => commitCount++);
@@ -153,25 +156,27 @@ void main() {
   group('clone / equality / serialization', () {
     test('clone produces equal but independent state', () {
       final state = SimpleAppState();
-      state.slot<int>('count').set(1);
+      final countSlot = state.slot<int>('count', initial: 1);
 
       final cloned = state.clone();
 
       expect(cloned, state);
       expect(identical(cloned, state), isFalse);
 
-      cloned.slot<int>('count').set(2);
-      expect(state.slot<int>('count').get(), 1);
+      final clonedSlot = cloned.slot<int>('count', initial: 1);
+      clonedSlot.set(2);
+      expect(countSlot.get(), 1);
+      expect(clonedSlot.get(), 2);
     });
 
     test('toDict and fromDict perform round-trip serialization', () {
       final state = SimpleAppState();
-      state.slot<int>('count').set(42);
+      state.slot<int>('count', initial: 42);
 
       final dict = state.toDict();
       final restored = SimpleAppState.fromDict(dict, {});
 
-      expect(restored.slot<int>('count').get(), 42);
+      expect(restored.slot<int>('count', initial: 42).get(), 42);
       expect(restored, state);
     });
   });

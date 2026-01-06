@@ -22,14 +22,13 @@ class _ListenerEntry {
 typedef DebugListener =
     void Function(StateSlot key, dynamic oldValue, dynamic newValue);
 
-/// A listener for file_state_manager management that returns once the state
-/// has been determined.
+/// A listener that is notified when a logical state change is committed.
 /// In batch processing, it returns only once at the end of the processing.
 typedef StateListener = void Function(SimpleAppState nowState);
 
 class SimpleAppState extends CloneableFile {
   static const String className = "SimpleAppState";
-  static const String version = "2";
+  static const String version = "3";
   final Map<String, dynamic> _data = {};
 
   // The following are temporary parameters that cannot be deep copied (cloned):
@@ -61,10 +60,13 @@ class SimpleAppState extends CloneableFile {
   /// Returns a typed state slot associated with the given name.
   ///
   /// If the slot does not exist yet, a new slot is created and its type is
-  /// fixed on first access.
+  /// fixed at creation time.
+  /// Once fixed, the slot's type cannot be changed.
+  /// Accessing the same slot name with a different type will throw an error.
   ///
   /// If [initial] is provided and no value is currently stored for this slot,
   /// the initial value is stored at the time of slot creation.
+  ///
   /// If a value already exists (for example, restored via fromDict),
   /// [initial] is ignored.
   ///
@@ -72,21 +74,26 @@ class SimpleAppState extends CloneableFile {
   /// 指定された名前に対応する、型付きの状態スロットを取得します。
   ///
   /// スロットがまだ存在しない場合は新しく作成され、
-  /// その時点でスロットの型が確定します。
+  /// その作成時点でスロットの型が確定します。
+  /// 一度確定したスロットの型は変更できません。
+  /// 同じ名前のスロットを異なる型で取得しようとするとエラーになります。
   ///
-  /// [initial] が指定されており、かつこのスロットにまだ値が存在しない場合のみ、
+  /// [initial] が指定されており、かつ値がまだ存在しない場合のみ、
   /// スロット作成時に初期値として設定されます。
-  /// すでに値が存在する場合（fromDict によって復元された場合など）、
+  ///
+  /// すでに値が存在する場合（fromDict によって復元された場合など）
   /// [initial] は無視されます。
   ///
   /// * [name] : The slot name. This name will be thrown if an error occurs,
   /// so do not put any confidential information in it.
   /// * [initial] : Initial value of the slot,
-  /// used only when no value exists yet.
   /// Note that when you provide a specific type (mainly List),
   /// you always need to specify a caster.
   /// * [caster] : Optional function to convert a raw value retrieved from
-  /// storage to the expected type `T`. This is required for typed collections.
+  /// storage to the expected type `T`.
+  ///
+  /// This is required when `T` is a typed collection
+  /// such as `List<T>` or `Map<String, T>`.
   ///
   /// ---
   ///
@@ -97,7 +104,7 @@ class SimpleAppState extends CloneableFile {
   /// // List<String>
   /// slot<List<String>>(
   ///   'names',
-  ///   caster: (raw) => raw != null ? (raw as List).cast<String>() : null,
+  ///   caster: (raw) => (raw as List).cast<String>(),
   /// );
   /// ```
   ///
@@ -106,9 +113,9 @@ class SimpleAppState extends CloneableFile {
   /// // Map<String, List<String>>
   /// slot<Map<String, List<String>>>(
   ///   'complex',
-  ///   caster: (raw) => raw != null ? (raw as Map<String, dynamic>).map(
+  ///   caster: (raw) => (raw as Map<String, dynamic>).map(
   ///       (k, v) => MapEntry(k, (v as List).cast<String>()),
-  ///   ) : null,
+  ///   ),
   /// );
   /// ```
   ///
@@ -116,13 +123,13 @@ class SimpleAppState extends CloneableFile {
   ///
   /// slot creation example:
   /// ```dart
-  /// final state = SimpleAppState(null);
+  /// final state = SimpleAppState();
   /// final count = state.slot<int>('count', initial: 0);
   /// ```
   StateSlot<T> slot<T>(
     String name, {
-    T? initial,
-    T? Function(dynamic value)? caster,
+    required T initial,
+    T Function(dynamic value)? caster,
   }) {
     final existing = _slots[name];
     if (existing != null) {
@@ -137,9 +144,9 @@ class SimpleAppState extends CloneableFile {
     }
     final slot = StateSlot<T>._(name, this, caster: caster);
     _slots[name] = slot;
-    // 初回作成時のみ初期値をセット
-    if (!_data.containsKey(name) && initial != null) {
-      _set(slot, initial);
+    // 初期値をセット
+    if (!_data.containsKey(name)) {
+      _setInitial(slot, initial);
     }
     return slot;
   }
@@ -246,27 +253,48 @@ class SimpleAppState extends CloneableFile {
   /// このため、取得した値を直接編集してもアプリの状態に影響はありません。
   ///
   /// * [key] : target slot.
-  T? _get<T>(StateSlot<T> key) {
+  T _get<T>(StateSlot<T> key) {
+    if (!_data.containsKey(key.name)) {
+      throw StateError('StateSlot "${key.name}" is not initialized');
+    }
     final raw = _data[key.name];
-    if (raw == null) return null;
     if (key.caster != null) {
       return key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(raw));
     }
     // Untyped but safe deep copy (Map<String, dynamic>, List<dynamic>, primitives)
-    return UtilCopy.deepCopyJsonableOrClonableFile(raw) as T?;
+    return UtilCopy.deepCopyJsonableOrClonableFile(raw) as T;
+  }
+
+  /// (en) This is a set method dedicated to setting the initial value of
+  /// the Slot. This method does not notify listeners.
+  ///
+  /// (ja) Slotの初期値設定専用のsetメソッドです。このメソッドはリスナに通知しません。
+  ///
+  /// * [key] : Target slot.
+  /// * [value] : The value to set.
+  void _setInitial<T>(StateSlot<T> key, T value) {
+    UtilCopy.validateJsonableOrClonableFile<T>(
+      value,
+      key,
+      context: 'state slot "${key.name}" initial',
+    );
+    _data[key.name] = value;
   }
 
   /// (en) Sets the value for the specified key.
   /// Any listeners associated with the key will also be notified.
-  /// This method returns the StateSlot provided as an argument for
-  /// method chaining.
   ///
   /// (ja) 指定されたキーに関して値をセットします。
   /// キーと紐付いたリスナーにも通知されます。
-  /// このメソッドは、メソッドチェーンのために引数で与えたStateSlotを返します。
-  StateSlot<T> _set<T>(StateSlot<T> key, T? value) {
-    final oldValue = _data[key.name] as T?;
-    if (oldValue == value) return key;
+  ///
+  /// * [key] : Target slot.
+  /// * [value] : The value to set.
+  void _set<T>(StateSlot<T> key, T value) {
+    if (!_data.containsKey(key.name)) {
+      throw StateError('StateSlot "${key.name}" is not initialized');
+    }
+    final oldValue = _data[key.name] as T;
+    if (oldValue == value) return;
     // 型チェック
     UtilCopy.validateJsonableOrClonableFile<T>(
       value,
@@ -289,7 +317,6 @@ class SimpleAppState extends CloneableFile {
       );
     }
     _notify(key);
-    return key;
   }
 
   /// (en) Performs a batch update.
@@ -414,6 +441,9 @@ class SimpleAppState extends CloneableFile {
   /// Existing values are replaced.
   /// Slots that do not yet exist are created during loading.
   ///
+  /// This method does not infer slot types.
+  /// All slots must be explicitly declared via [slot] before loading.
+  ///
   /// This method is intended for delayed loading (e.g. from cloud storage).
   /// It follows the same type-safety rules as [slot]:
   /// if a slot already exists, the loaded value must match its type.
@@ -424,6 +454,9 @@ class SimpleAppState extends CloneableFile {
   ///
   /// 既存の値は置き換えられます。
   /// まだ存在しないスロットは読み込み中に作成されます。
+  ///
+  /// このメソッドはスロットの型推論を行いません。
+  /// すべてのスロットは事前に [slot] で宣言されている必要があります。
   ///
   /// このメソッドは、遅延読み込み（例: クラウドストレージから）を目的としています。
   /// [slot] と同じ型安全性のルールに従います。
@@ -517,7 +550,9 @@ class SimpleAppState extends CloneableFile {
 
   @override
   bool operator ==(Object other) {
+    // 1. 同一参照なら即座に終了
     if (identical(this, other)) return true;
+    // 2. 基本的な型チェック
     if (other is! SimpleAppState) return false;
     final otherData = other._data;
     if (_data.length != otherData.length) return false;
