@@ -439,8 +439,6 @@ class SimpleAppState extends CloneableFile {
   /// (en) Loads state data from a dictionary after creation.
   ///
   /// Existing values are replaced.
-  /// Slots that do not yet exist are created during loading.
-  ///
   /// This method does not infer slot types.
   /// All slots must be explicitly declared via [slot] before loading.
   ///
@@ -453,8 +451,6 @@ class SimpleAppState extends CloneableFile {
   /// (ja) 作成後に辞書から状態データを読み込みます。
   ///
   /// 既存の値は置き換えられます。
-  /// まだ存在しないスロットは読み込み中に作成されます。
-  ///
   /// このメソッドはスロットの型推論を行いません。
   /// すべてのスロットは事前に [slot] で宣言されている必要があります。
   ///

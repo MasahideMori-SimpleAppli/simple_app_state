@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Fixed document of loadFromDict in `SimpleAppState`.
+
 ## 0.0.6
 
 * Improved consistency of user-defined generic types in `SimpleAppState`.
