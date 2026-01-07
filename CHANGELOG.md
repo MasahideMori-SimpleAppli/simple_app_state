@@ -1,3 +1,8 @@
+## 0.0.8
+
+* The `set` method has been changed to deep copy the value internally, making the app state less prone to corruption.
+* Improved code documentation, example and readme.
+
 ## 0.0.7
 
 * Fixed document of loadFromDict in `SimpleAppState`.

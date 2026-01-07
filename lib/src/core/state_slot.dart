@@ -2,7 +2,7 @@ part of 'simple_app_state_core.dart';
 
 class StateSlot<T> {
   static const String className = "StateSlot";
-  static const String version = "3";
+  static const String version = "5";
   final String name;
   final SimpleAppState state;
   final T Function(dynamic value)? caster;
@@ -20,16 +20,18 @@ class StateSlot<T> {
   /// storage to the expected type `T`. This is required for typed collections.
   StateSlot._(this.name, this.state, {this.caster});
 
-  /// (en) Returns the current value of this slot.
+  /// (en) Returns a deep copy of this slot's current value.
   /// The slot must be initialized before calling this method.
   ///
-  /// (ja) このスロットの現在の値を返します。
+  /// (ja) このスロットの現在の値のディープコピーを返します。
   /// 呼び出す前にスロットが初期化されている必要があります。
   T get() => state._get<T>(this);
 
   /// (en) Set value to this slot.
+  /// The value you set is deep-copied internally.
   ///
   /// (ja) このスロットに値を設定します。
+  /// セットする値は内部的にディープコピーされます。
   ///
   /// * [value] : The value to set. Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be set.
@@ -38,14 +40,16 @@ class StateSlot<T> {
   }
 
   /// (en) Update value using previous value.
+  /// The values passed to the [builder] are internally deep-copied.
   ///
   /// (ja) 前の値を使用して値を更新します。
+  /// [builder]には内部的にディープコピーされた値が渡されます。
   ///
   /// * [builder] : Return value is Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be return.
-  void update(T Function(T old) builder) {
-    final oldValue = state._get<T>(this);
-    final newValue = builder(oldValue);
+  void update(T Function(T oldCopy) builder) {
+    final oldCopy = state._get<T>(this);
+    final newValue = builder(oldCopy);
     state._set<T>(this, newValue);
   }
 

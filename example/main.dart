@@ -91,10 +91,11 @@ class CounterPage extends StatelessWidget {
               appState.batch(() {
                 countSlot.update((v) => v + 1);
 
-                logsSlot.update((old) {
-                  final next = List<String>.from(old);
-                  next.add('Increment at ${DateTime.now()}');
-                  return next;
+                logsSlot.update((oldCopy) {
+                  // Since 'oldCopy' is already a deep copy,
+                  // you can safely mutate it using methods like .add() or .remove().
+                  oldCopy.add('Increment at ${DateTime.now()}');
+                  return oldCopy;
                 });
               });
             },

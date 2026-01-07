@@ -28,7 +28,7 @@ typedef StateListener = void Function(SimpleAppState nowState);
 
 class SimpleAppState extends CloneableFile {
   static const String className = "SimpleAppState";
-  static const String version = "3";
+  static const String version = "5";
   final Map<String, dynamic> _data = {};
 
   // The following are temporary parameters that cannot be deep copied (cloned):
@@ -64,8 +64,9 @@ class SimpleAppState extends CloneableFile {
   /// Once fixed, the slot's type cannot be changed.
   /// Accessing the same slot name with a different type will throw an error.
   ///
-  /// If [initial] is provided and no value is currently stored for this slot,
-  /// the initial value is stored at the time of slot creation.
+  /// If [initial] is specified and a value does not already exist,
+  /// a deep copy of [initial] is set as the initial value when the slot is
+  /// created.
   ///
   /// If a value already exists (for example, restored via fromDict),
   /// [initial] is ignored.
@@ -79,7 +80,7 @@ class SimpleAppState extends CloneableFile {
   /// 同じ名前のスロットを異なる型で取得しようとするとエラーになります。
   ///
   /// [initial] が指定されており、かつ値がまだ存在しない場合のみ、
-  /// スロット作成時に初期値として設定されます。
+  /// スロット作成時に初期値として[initial]のディープコピーが設定されます。
   ///
   /// すでに値が存在する場合（fromDict によって復元された場合など）
   /// [initial] は無視されます。
@@ -267,8 +268,10 @@ class SimpleAppState extends CloneableFile {
 
   /// (en) This is a set method dedicated to setting the initial value of
   /// the Slot. This method does not notify listeners.
+  /// The value you set is deep-copied internally.
   ///
   /// (ja) Slotの初期値設定専用のsetメソッドです。このメソッドはリスナに通知しません。
+  /// セットする値は内部的にディープコピーされます。
   ///
   /// * [key] : Target slot.
   /// * [value] : The value to set.
@@ -278,13 +281,21 @@ class SimpleAppState extends CloneableFile {
       key,
       context: 'state slot "${key.name}" initial',
     );
-    _data[key.name] = value;
+    if (key.caster != null) {
+      _data[key.name] = key.caster!(
+        UtilCopy.deepCopyJsonableOrClonableFile(value),
+      );
+    } else {
+      _data[key.name] = UtilCopy.deepCopyJsonableOrClonableFile(value) as T;
+    }
   }
 
   /// (en) Sets the value for the specified key.
+  /// The value you set is deep-copied internally.
   /// Any listeners associated with the key will also be notified.
   ///
   /// (ja) 指定されたキーに関して値をセットします。
+  /// セットする値は内部的にディープコピーされます。
   /// キーと紐付いたリスナーにも通知されます。
   ///
   /// * [key] : Target slot.
@@ -301,19 +312,22 @@ class SimpleAppState extends CloneableFile {
       key,
       context: 'state slot "$key.name"',
     );
-    _data[key.name] = value;
     if (key.caster != null) {
+      _data[key.name] = key.caster!(
+        UtilCopy.deepCopyJsonableOrClonableFile(value),
+      );
       _debugListener?.call(
         key,
         key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(oldValue)),
         key.caster!(UtilCopy.deepCopyJsonableOrClonableFile(value)),
       );
     } else {
+      _data[key.name] = UtilCopy.deepCopyJsonableOrClonableFile(value) as T;
       // Untyped but safe deep copy (Map<String, dynamic>, List<dynamic>, primitives)
       _debugListener?.call(
         key,
-        UtilCopy.deepCopyJsonableOrClonableFile(oldValue) as T?,
-        UtilCopy.deepCopyJsonableOrClonableFile(value) as T?,
+        UtilCopy.deepCopyJsonableOrClonableFile(oldValue) as T,
+        UtilCopy.deepCopyJsonableOrClonableFile(value) as T,
       );
     }
     _notify(key);

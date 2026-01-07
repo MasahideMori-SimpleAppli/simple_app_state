@@ -109,7 +109,7 @@ count.set(1);
 ```
 
 ```text
-count.update((old) => old + 1);
+count.update((oldCopy) => oldCopy + 1);
 ```
 
 - Updates are applied immediately
@@ -201,7 +201,7 @@ final count = appState.slot<int>('count', initial: 0);
 
 ```text
 final list = logs.get();
-list?.add('new entry'); // ❌ has no effect
+list.add('new entry'); // ❌ has no effect
 ```
 
 Values are always deep-copied.
@@ -209,10 +209,9 @@ Values are always deep-copied.
 ✅ **Correct**
 
 ```text
-logs.update((old){
-  final next = List<String>.from(old);
-  next.add('new entry');
-  return next;
+logs.update((oldCopy){
+  oldCopy.add('new entry');
+  return oldCopy;
 });
 
 ```
