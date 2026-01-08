@@ -24,11 +24,20 @@ abstract class SlotState<T extends SlotStatefulWidget> extends State<T> {
     super.initState();
     _subscriberId = identityHashCode(this).toString();
     for (final slot in widget.slots) {
-      slot.state.addUIListener(slot, _subscriberId, _onStateChanged);
+      slot.state.addUIListener(slot, _subscriberId, onStateChanged);
     }
   }
 
-  void _onStateChanged() {
+  /// (en) Requests a widget rebuild.
+  /// Override if additional processing is required.
+  /// Be sure to call super.onStateChanged() unless
+  /// you intentionally want to suppress rebuilding.
+  ///
+  /// (ja) ウィジェットのリビルドをリクエストするメソッドです。
+  /// 追加の処理が必要な場合はオーバーライドしてください。
+  /// ただし、意図的に再構築を抑制したい場合を除き、
+  /// 必ず super.onStateChanged() を呼び出してください。
+  void onStateChanged() {
     if (mounted) setState(() {});
   }
 

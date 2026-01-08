@@ -28,7 +28,7 @@ typedef StateListener = void Function(SimpleAppState nowState);
 
 class SimpleAppState extends CloneableFile {
   static const String className = "SimpleAppState";
-  static const String version = "5";
+  static const String version = "6";
   final Map<String, dynamic> _data = {};
 
   // The following are temporary parameters that cannot be deep copied (cloned):
@@ -480,16 +480,39 @@ class SimpleAppState extends CloneableFile {
   /// in each object's serialization method as {"className": className}.
   /// If a dictionary with the same key name and "className" field is found,
   /// the object will be restored using the function corresponding to the key.
+  /// * [notifyListeners] : If false, this method will not notify listeners,
+  /// which is useful if you need to do additional work after loading the state
+  /// but before notifying the UI.
   void loadFromDict(
     Map<String, dynamic> src,
-    Map<String, CloneableFile Function(Map<String, dynamic>)> fromDictMap,
-  ) {
+    Map<String, CloneableFile Function(Map<String, dynamic>)> fromDictMap, {
+    bool notifyListeners = true,
+  }) {
     final data = src['data'];
     if (data == null) return;
     if (data is! Map<String, dynamic>) {
       throw StateError('Invalid state data format');
     }
-    batch(() {
+    if (notifyListeners) {
+      batch(() {
+        for (final entry in data.entries) {
+          final key = entry.key;
+          final rawValue = entry.value;
+          final restoredValue = UtilCopy.fromDictJsonableOrClonableFile(
+            rawValue,
+            fromDictMap,
+          );
+          final slot = _slots[key];
+          if (slot == null) {
+            throw StateError(
+              'Unknown state slot "$key". '
+              'All slots must be declared via slot<T>() before loading.',
+            );
+          }
+          _set(slot, restoredValue);
+        }
+      });
+    } else {
       for (final entry in data.entries) {
         final key = entry.key;
         final rawValue = entry.value;
@@ -504,9 +527,9 @@ class SimpleAppState extends CloneableFile {
             'All slots must be declared via slot<T>() before loading.',
           );
         }
-        _set(slot, restoredValue);
+        _setInitial(slot, restoredValue);
       }
-    });
+    }
     isLoaded = true;
   }
 

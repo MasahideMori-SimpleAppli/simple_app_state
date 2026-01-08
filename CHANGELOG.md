@@ -1,3 +1,8 @@
+## 0.0.9
+
+* The `onStateChanged` method of `SlotStatefulWidget` is now exposed and can be overridden.
+* `SimpleAppState`'s `loadFromDict` now has a `notifyListeners` flag if you want to delay listener notification.
+
 ## 0.0.8
 
 * The `set` method has been changed to deep copy the value internally, making the app state less prone to corruption.
