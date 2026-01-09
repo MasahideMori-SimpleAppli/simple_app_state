@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simple_app_state/simple_app_state.dart';
+import 'package:simple_app_state/src/core/state_slot.dart';
 
 /// (en) A stateful widget that is tied to state management and automatically
 /// updates the screen.

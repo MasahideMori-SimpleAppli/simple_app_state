@@ -1,7 +1,4 @@
-import 'package:file_state_manager/file_state_manager.dart';
-import 'package:simple_app_state/src/core/util_copy.dart';
-
-part 'state_slot.dart';
+part of 'app_state_impl.dart';
 
 class _ListenerEntry {
   final String subscriberId;
@@ -26,13 +23,13 @@ typedef DebugListener =
 /// In batch processing, it returns only once at the end of the processing.
 typedef StateListener = void Function(SimpleAppState nowState);
 
-class SimpleAppState extends CloneableFile {
+class SimpleAppState extends CloneableFile
+    with _AppStateInternals
+    implements AppStateProtocol {
   static const String className = "SimpleAppState";
-  static const String version = "6";
-  final Map<String, dynamic> _data = {};
+  static const String version = "7";
 
   // The following are temporary parameters that cannot be deep copied (cloned):
-  final Map<String, StateSlot<dynamic>> _slots = {};
   final Map<StateSlot, List<_ListenerEntry>> _uiListeners = {};
   DebugListener? _debugListener;
   StateListener? _stateListener;
@@ -50,6 +47,7 @@ class SimpleAppState extends CloneableFile {
   /// This can usually be null.
   /// This value is assigned by the factory constructor when the data is
   /// restored.
+  /// This value is not subject to automatic copying.
   SimpleAppState({Map<String, dynamic>? data}) {
     if (data != null && data.isNotEmpty) {
       _data.addAll(data);
@@ -143,11 +141,11 @@ class SimpleAppState extends CloneableFile {
       // 既に値があり、initial は無視
       return existing;
     }
-    final slot = StateSlot<T>._(name, this, caster: caster);
+    final slot = StateSlot<T>(name, this, caster: caster);
     _slots[name] = slot;
     // 初期値をセット
     if (!_data.containsKey(name)) {
-      _setInitial(slot, initial);
+      setInitial(slot, initial);
     }
     return slot;
   }
@@ -187,22 +185,7 @@ class SimpleAppState extends CloneableFile {
     _stateListener = null;
   }
 
-  /// (en) Adds a listener for UI updates associated with the specified
-  /// key and ID.
-  /// Normally, you should not use this directly. Instead, consider using
-  /// a class that extends SlotStatefulWidget or StateSlotBuilder.
-  ///
-  /// (ja) 指定キー、及びIDに紐付いたUI更新用のリスナを追加します。
-  /// 通常はこれを直接使用せず、SlotStatefulWidgetを拡張したクラスか
-  /// StateSlotBuilderの利用を検討してください。
-  ///
-  /// * [key]: A slot for manipulating the managed value.
-  /// * [subscriberId]: An ID for identifying the subscriber to StateSlot
-  /// change notifications.
-  /// One is assigned per State (widget), and even if the same State subscribes
-  /// to multiple slots,
-  /// only one notification for screen updates will be sent.
-  /// * [callback]: A callback that is triggered when the key value changes.
+  @override
   void addUIListener(
     StateSlot key,
     String subscriberId,
@@ -212,20 +195,7 @@ class SimpleAppState extends CloneableFile {
     list.add(_ListenerEntry(subscriberId, callback));
   }
 
-  /// (en) Deletes the UI update listener associated with the specified
-  /// key and ID.
-  /// Normally, you should not use this directly. Instead, consider using
-  /// a class that extends SlotStatefulWidget or StateSlotBuilder.
-  ///
-  /// (ja) 指定キー、及びIDに紐付いたUI更新用のリスナを削除します。
-  /// 通常はこれを直接使用せず、SlotStatefulWidgetを拡張したクラスか
-  /// StateSlotBuilderの利用を検討してください。
-  ///
-  /// * [subscriberId]: ID to identify the subscriber to StateSlot change
-  /// notifications.
-  /// * [key]: Slot for manipulating the managed value.
-  /// If null, all listeners related to subscriberId will be deleted.
-  /// If not null, only the listener associated with key will be deleted.
+  @override
   void removeUIListener({required String subscriberId, StateSlot? key}) {
     if (key != null) {
       // 単一 key の listener 削除
@@ -244,17 +214,8 @@ class SimpleAppState extends CloneableFile {
     }
   }
 
-  /// (en) Retrieves the value associated with the specified key.
-  /// The retrieved value is always a deep copy of the registered object.
-  /// Therefore, directly editing the retrieved value does not affect the state
-  /// of the app.
-  ///
-  /// (ja) 指定されたキーに紐づく値を取得します。
-  /// 取得できる値は常に登録されたオブジェクトのディープコピーです。
-  /// このため、取得した値を直接編集してもアプリの状態に影響はありません。
-  ///
-  /// * [key] : target slot.
-  T _get<T>(StateSlot<T> key) {
+  @override
+  T get<T>(StateSlot<T> key) {
     if (!_data.containsKey(key.name)) {
       throw StateError('StateSlot "${key.name}" is not initialized');
     }
@@ -275,7 +236,7 @@ class SimpleAppState extends CloneableFile {
   ///
   /// * [key] : Target slot.
   /// * [value] : The value to set.
-  void _setInitial<T>(StateSlot<T> key, T value) {
+  void setInitial<T>(StateSlot<T> key, T value) {
     UtilCopy.validateJsonableOrClonableFile<T>(
       value,
       key,
@@ -290,17 +251,8 @@ class SimpleAppState extends CloneableFile {
     }
   }
 
-  /// (en) Sets the value for the specified key.
-  /// The value you set is deep-copied internally.
-  /// Any listeners associated with the key will also be notified.
-  ///
-  /// (ja) 指定されたキーに関して値をセットします。
-  /// セットする値は内部的にディープコピーされます。
-  /// キーと紐付いたリスナーにも通知されます。
-  ///
-  /// * [key] : Target slot.
-  /// * [value] : The value to set.
-  void _set<T>(StateSlot<T> key, T value) {
+  @override
+  void set<T>(StateSlot<T> key, T value) {
     if (!_data.containsKey(key.name)) {
       throw StateError('StateSlot "${key.name}" is not initialized');
     }
@@ -509,7 +461,7 @@ class SimpleAppState extends CloneableFile {
               'All slots must be declared via slot<T>() before loading.',
             );
           }
-          _set(slot, restoredValue);
+          set(slot, restoredValue);
         }
       });
     } else {
@@ -527,29 +479,35 @@ class SimpleAppState extends CloneableFile {
             'All slots must be declared via slot<T>() before loading.',
           );
         }
-        _setInitial(slot, restoredValue);
+        setInitial(slot, restoredValue);
       }
     }
     isLoaded = true;
   }
 
   /// (en) For operations such as Undo, the current listeners are retained and
-  /// only the data is replaced.
+  /// only the data is replaced. The data is deep copied.
   /// After that, notifications are sent to all UI listeners in a batch process
   /// to update.
   /// In other words, the screen the user currently has open is automatically
   /// updated.
   ///
   /// (ja) Undo操作などで、現在のリスナを保持したままデータだけを入れ替えます。
+  /// データはディープコピーされます。
   /// その後、更新のために全てのUIリスナにバッチ処理で通知が送られます。
   /// つまり、ユーザーが現在開いている画面に関して自動更新が行われます。
   ///
   /// * [other] : Source data to copy.
-  void replaceDataFrom(SimpleAppState other) {
+  /// * [notifyListeners] : If false, this method will not notify listeners,
+  /// which is useful if you need to do additional work after loading the state
+  /// but before notifying the UI.
+  void replaceDataFrom(SimpleAppState other, {bool notifyListeners = true}) {
     _data
       ..clear()
       ..addAll(UtilCopy.deepCopyJsonableOrClonableFile(other._data));
-    notifyAll(); // 今いる listener に通知
+    if (notifyListeners) {
+      notifyAll(); // 今いる listener に通知
+    }
   }
 
   /// (en) It will batch notifications to all UI listeners immediately.

@@ -1,3 +1,10 @@
+## 0.0.10
+
+* `SimpleAppState`'s `replaceDataFrom` now has a `notifyListeners` flag if you want to delay listener notification.
+* Added `RefAppState` class. This class can handle reference values.
+* Refactoring the project structure.
+* Some documentation improvements.
+
 ## 0.0.9
 
 * The `onStateChanged` method of `SlotStatefulWidget` is now exposed and can be overridden.

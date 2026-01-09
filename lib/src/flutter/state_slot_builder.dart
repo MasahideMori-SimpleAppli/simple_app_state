@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simple_app_state/simple_app_state.dart';
+import 'package:simple_app_state/src/core/state_slot.dart';
 
 /// (en) A builder that can be used when you want to update a widget depending
 /// on the value of a slot.

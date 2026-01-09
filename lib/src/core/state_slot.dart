@@ -1,10 +1,10 @@
-part of 'simple_app_state_core.dart';
+import 'package:simple_app_state/src/core/app_state_protocol.dart';
 
 class StateSlot<T> {
   static const String className = "StateSlot";
-  static const String version = "5";
+  static const String version = "6";
   final String name;
-  final SimpleAppState state;
+  final AppStateProtocol state;
   final T Function(dynamic value)? caster;
 
   /// (en) Do not call this constructor directly.
@@ -18,14 +18,14 @@ class StateSlot<T> {
   /// * [state] : The parent state class that manages this slot.
   /// * [caster] : Optional function to convert a raw value retrieved from
   /// storage to the expected type `T`. This is required for typed collections.
-  StateSlot._(this.name, this.state, {this.caster});
+  StateSlot(this.name, this.state, {this.caster});
 
   /// (en) Returns a deep copy of this slot's current value.
   /// The slot must be initialized before calling this method.
   ///
   /// (ja) このスロットの現在の値のディープコピーを返します。
   /// 呼び出す前にスロットが初期化されている必要があります。
-  T get() => state._get<T>(this);
+  T get() => state.get<T>(this);
 
   /// (en) Set value to this slot.
   /// The value you set is deep-copied internally.
@@ -36,7 +36,7 @@ class StateSlot<T> {
   /// * [value] : The value to set. Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be set.
   void set(T value) {
-    state._set<T>(this, value);
+    state.set<T>(this, value);
   }
 
   /// (en) Update value using previous value.
@@ -48,9 +48,9 @@ class StateSlot<T> {
   /// * [builder] : Return value is Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be return.
   void update(T Function(T oldCopy) builder) {
-    final oldCopy = state._get<T>(this);
+    final oldCopy = state.get<T>(this);
     final newValue = builder(oldCopy);
-    state._set<T>(this, newValue);
+    state.set<T>(this, newValue);
   }
 
   @override

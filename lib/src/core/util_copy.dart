@@ -1,5 +1,5 @@
 import 'package:file_state_manager/file_state_manager.dart';
-import 'package:simple_app_state/simple_app_state.dart';
+import 'package:simple_app_state/src/core/state_slot.dart';
 
 class UtilCopy {
   static final int _maxDepth = 100; // 安全な再帰深度上限
