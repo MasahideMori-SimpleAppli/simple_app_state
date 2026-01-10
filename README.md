@@ -41,7 +41,7 @@ https://masahidemori-simpleappli.github.io/simple_app_state_docs/
 
 SimpleAppState is built around three ideas:
 
-- **All application state lives in one place** (`SimpleAppState`)
+- **Application state lives in one place** (`SimpleAppState`)
 - **Widgets subscribe to state, but never own it**
 - **Rebuilds are explicit and predictable**
 
