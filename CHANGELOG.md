@@ -1,3 +1,8 @@
+## 0.0.11
+
+* Fixed the description of some methods in `StateSlot`, as the addition of `RefAppState` caused some inconsistencies.
+* The readme has been improved.
+
 ## 0.0.10
 
 * `SimpleAppState`'s `replaceDataFrom` now has a `notifyListeners` flag if you want to delay listener notification.

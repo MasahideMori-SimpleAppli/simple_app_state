@@ -5,24 +5,17 @@ import 'package:simple_app_state/src/core/state_slot.dart';
 /// (ja) Slotやウィジェットと複数種類のStateをつなぐためのプロトコルの実装です。
 abstract class AppStateProtocol {
   /// (en) Retrieves the value associated with the specified slot.
-  /// The retrieved value is always a deep copy of the registered object.
-  /// Therefore, directly editing the retrieved value does not affect the state
-  /// of the app.
   ///
   /// (ja) 指定されたスロットに紐づく値を取得します。
-  /// 取得できる値は常に登録されたオブジェクトのディープコピーです。
-  /// このため、取得した値を直接編集してもアプリの状態に影響はありません。
   ///
   /// * [key] : target slot.
   T get<T>(StateSlot<T> key);
 
   /// (en) Sets the value for the specified slot.
-  /// The value you set is deep-copied internally.
-  /// Any listeners associated with the slot will also be notified.
+  /// Any listeners associated with the slot will be notified of the change.
   ///
   /// (ja) 指定されたスロットに関して値をセットします。
-  /// セットする値は内部的にディープコピーされます。
-  /// スロットと紐付いたリスナーにも通知されます。
+  /// スロットと紐付いたリスナーに変更が通知されます。
   ///
   /// * [key] : Target slot.
   /// * [value] : The value to set.

@@ -20,18 +20,32 @@ class StateSlot<T> {
   /// storage to the expected type `T`. This is required for typed collections.
   StateSlot(this.name, this.state, {this.caster});
 
-  /// (en) Returns a deep copy of this slot's current value.
+  /// (en) Returns this slot's current value.
+  /// If this slot was created from SimpleAppState,
+  /// it will always return a deep copy.
+  /// If this slot was created from RefAppState,
+  /// it will basically return a reference.
   /// The slot must be initialized before calling this method.
   ///
-  /// (ja) このスロットの現在の値のディープコピーを返します。
+  /// (ja) このスロットの現在の値を返します。
+  /// このスロットがSimpleAppStateから作られている場合は常にディープコピーを返します。
+  /// このスロットがRefAppStateから作られている場合は基本的に参照を返します。
   /// 呼び出す前にスロットが初期化されている必要があります。
   T get() => state.get<T>(this);
 
   /// (en) Set value to this slot.
-  /// The value you set is deep-copied internally.
+  /// If this slot was created from SimpleAppState,
+  /// the value you set will be deep-copied internally.
+  /// If this slot was created from RefAppState,
+  /// the value you set will be set as is.
+  /// Any listeners associated with the slot will be notified of the change.
   ///
   /// (ja) このスロットに値を設定します。
+  /// このスロットがSimpleAppStateから作られている場合、
   /// セットする値は内部的にディープコピーされます。
+  /// このスロットがRefAppStateから作られている場合、
+  /// セットする値はそのまま設定されます。
+  /// スロットと紐付いたリスナーに変更が通知されます。
   ///
   /// * [value] : The value to set. Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be set.
@@ -40,10 +54,18 @@ class StateSlot<T> {
   }
 
   /// (en) Update value using previous value.
-  /// The values passed to the [builder] are internally deep-copied.
+  /// If this slot is created from SimpleAppState,
+  /// [builder] is passed an internally deep-copied value.
+  /// If this slot is created from RefAppState,
+  /// [builder] is passed the value as is.
+  /// Any listeners associated with the slot will be notified of the change.
   ///
   /// (ja) 前の値を使用して値を更新します。
+  /// このスロットがSimpleAppStateから作られている場合、
   /// [builder]には内部的にディープコピーされた値が渡されます。
+  /// このスロットがRefAppStateから作られている場合、
+  /// [builder]には値はそのまま渡されます。
+  /// スロットと紐付いたリスナーに変更が通知されます。
   ///
   /// * [builder] : Return value is Only primitive or JSON serializable values
   /// or classes that extend CloneableFile can be return.
