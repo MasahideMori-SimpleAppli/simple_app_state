@@ -1,3 +1,12 @@
+## 0.0.12
+
+* Clarified the memory semantics of `StateSlot` and `RefSlot` in documentation.
+* `StateSlot` is now explicitly documented as returning deep-copied values.
+* `RefSlot` is now explicitly documented as returning reference values.
+* `RefAppState.slot()` now returns `RefSlot<T>` instead of `StateSlot<T>`.
+* Clarified that `RefAppState.replaceDataFrom` and `clone` perform deep copies for snapshot and undo purposes.
+* Minor documentation and wording fixes.
+
 ## 0.0.11
 
 * Fixed the description of some methods in `StateSlot`, as the addition of `RefAppState` caused some inconsistencies.

@@ -2,7 +2,7 @@ part of 'app_state_impl.dart';
 
 class RefAppState extends SimpleAppState {
   static const String className = "RefAppState";
-  static const String version = "1";
+  static const String version = "2";
 
   /// * [data]: The initial value of the managed state.
   /// This can usually be null.
@@ -57,23 +57,23 @@ class RefAppState extends SimpleAppState {
   /// final a = state.slot<ClassA>('a', initial: ClassA());
   /// ```
   @override
-  StateSlot<T> slot<T>(
+  RefSlot<T> slot<T>(
     String name, {
     required T initial,
     T Function(dynamic value)? caster,
   }) {
     final existing = _slots[name];
     if (existing != null) {
-      if (existing is! StateSlot<T>) {
+      if (existing is! RefSlot<T>) {
         throw StateError(
           'Slot "$name" already bound to '
-          '${existing.runtimeType}, not StateSlot<$T>',
+          '${existing.runtimeType}, not RefSlot<$T>',
         );
       }
       // 既に値があり、initial は無視
       return existing;
     }
-    final slot = StateSlot<T>(name, this, caster: caster);
+    final slot = RefSlot<T>(name, this);
     _slots[name] = slot;
     // 初期値をセット
     if (!_data.containsKey(name)) {
@@ -99,8 +99,11 @@ class RefAppState extends SimpleAppState {
   /// * [key] : target slot.
   @override
   T get<T>(StateSlot<T> key) {
+    if (key is! RefSlot<T>) {
+      throw StateError("RefAppState only supports RefSlot");
+    }
     if (!_data.containsKey(key.name)) {
-      throw StateError('StateSlot "${key.name}" is not initialized');
+      throw StateError('RefSlot "${key.name}" is not initialized');
     }
     return _data[key.name];
   }
@@ -116,6 +119,9 @@ class RefAppState extends SimpleAppState {
   /// * [value] : The value to set.
   @override
   void setInitial<T>(StateSlot<T> key, T value) {
+    if (key is! RefSlot<T>) {
+      throw StateError("RefAppState only supports RefSlot");
+    }
     _data[key.name] = value;
   }
 
@@ -131,8 +137,11 @@ class RefAppState extends SimpleAppState {
   /// * [value] : The value to set.
   @override
   void set<T>(StateSlot<T> key, T value) {
+    if (key is! RefSlot<T>) {
+      throw StateError("RefAppState only supports RefSlot");
+    }
     if (!_data.containsKey(key.name)) {
-      throw StateError('StateSlot "${key.name}" is not initialized');
+      throw StateError('RefSlot "${key.name}" is not initialized');
     }
     _data[key.name] = value;
     _notify(key);
@@ -148,6 +157,34 @@ class RefAppState extends SimpleAppState {
     bool notifyListeners = true,
   }) {
     throw UnimplementedError();
+  }
+
+  /// (en) For operations such as Undo, the current listeners are retained and
+  /// only the data is replaced. The data is deep copied.
+  /// After that, notifications are sent to all UI listeners in a batch process
+  /// to update.
+  /// In other words, the screen the user currently has open is automatically
+  /// updated.
+  ///
+  /// (ja) Undo操作などで、現在のリスナを保持したままデータだけを入れ替えます。
+  /// その後、更新のために全てのUIリスナにバッチ処理で通知が送られます。
+  /// つまり、ユーザーが現在開いている画面に関して自動更新が行われます。
+  ///
+  /// * [other] : Source data to deep copy.
+  /// * [notifyListeners] : If false, this method will not notify listeners,
+  /// which is useful if you need to do additional work after loading the state
+  /// but before notifying the UI.
+  @override
+  void replaceDataFrom(SimpleAppState other, {bool notifyListeners = true}) {
+    if (other is! RefAppState) {
+      throw StateError("The other param type is only supports RefAppState");
+    }
+    _data
+      ..clear()
+      ..addAll(UtilCopy.deepCopyJsonableOrClonableFile(other._data));
+    if (notifyListeners) {
+      notifyAll(); // 今いる listener に通知
+    }
   }
 
   /// (en) Returns a clone if all contents of this class are cloneable.
