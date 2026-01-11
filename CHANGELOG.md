@@ -1,3 +1,9 @@
+## 0.0.14
+
+* `RefSlot` is now exported as a public API type (`simple_app_state.RefSlot`),
+  so it appears in dartdoc and can be referenced by users.
+* No runtime behavior changes.
+
 ## 0.0.12
 
 * Clarified the memory semantics of `StateSlot` and `RefSlot` in documentation.
