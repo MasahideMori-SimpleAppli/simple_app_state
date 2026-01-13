@@ -27,7 +27,7 @@ class SimpleAppState extends CloneableFile
     with _AppStateInternals
     implements AppStateProtocol {
   static const String className = "SimpleAppState";
-  static const String version = "7";
+  static const String version = "8";
 
   // The following are temporary parameters that cannot be deep copied (cloned):
   final Map<StateSlot, List<_ListenerEntry>> _uiListeners = {};
@@ -36,6 +36,9 @@ class SimpleAppState extends CloneableFile
 
   // Flag indicating whether a batch is currently being processed.
   bool _isBatch = false;
+
+  // A flag that marks when a logical "change has occurred."
+  bool _hasPendingCommit = false;
 
   // Already loaded flag for when using loadFromDict.
   bool isLoaded = false;
@@ -283,6 +286,10 @@ class SimpleAppState extends CloneableFile
       );
     }
     _notify(key);
+    // バッチ処理中でなければ_stateListenerに通知する。
+    if (!_isBatch) {
+      _flushStateListener();
+    }
   }
 
   /// (en) Performs a batch update.
@@ -309,7 +316,8 @@ class SimpleAppState extends CloneableFile
       if (!wasBatching) {
         final ids = Set.of(_pendingSubscriberIds);
         _pendingSubscriberIds.clear();
-        _flushSubscriberIds(ids);
+        _flushUIListeners(ids);
+        _flushStateListener();
       }
     }
   }
@@ -344,16 +352,14 @@ class SimpleAppState extends CloneableFile
   ///
   /// * [subscriberId] : The ID of the subscriber you want to call back.
   void _requestNotify(String? subscriberId) {
-    if (subscriberId == null) {
-      if (!_isBatch) {
-        _flushSubscriberIds({});
-      }
+    // 論理的に「変更が起きた」ことをマークする。
+    _hasPendingCommit = true;
+    // UI に関係ない変更なら、UI 側は何もしない
+    if (subscriberId == null) return;
+    if (_isBatch) {
+      _pendingSubscriberIds.add(subscriberId);
     } else {
-      if (_isBatch) {
-        _pendingSubscriberIds.add(subscriberId);
-      } else {
-        _flushSubscriberIds({subscriberId});
-      }
+      _flushUIListeners({subscriberId});
     }
   }
 
@@ -364,7 +370,7 @@ class SimpleAppState extends CloneableFile
   ///
   /// * [subscriberIds]: A set of subscriber IDs you want to call back.
   /// If no listeners exist, an empty set is passed.
-  void _flushSubscriberIds(Set<String> subscriberIds) {
+  void _flushUIListeners(Set<String> subscriberIds) {
     final calledSubscriberIds = <String>{};
     for (final entry in _uiListeners.entries) {
       for (final listener in entry.value) {
@@ -374,10 +380,19 @@ class SimpleAppState extends CloneableFile
         }
       }
     }
-    // 変更確定後に最新の状態を通知する。
-    // これはサブスクライバーの有無に関わらず、
-    // 論理的な状態変更があれば必ず呼ばれる。
-    _stateListener?.call(this);
+  }
+
+  /// (en) A method to call _stateListener when a commit occurs.
+  ///
+  /// (ja) コミットが発生した単位で_stateListenerをコールするためのメソッド。
+  void _flushStateListener() {
+    if (_hasPendingCommit) {
+      _hasPendingCommit = false;
+      // 変更確定後に最新の状態を通知する。
+      // これはサブスクライバーの有無に関わらず、
+      // 論理的な状態変更があれば必ず呼ばれる。
+      _stateListener?.call(this);
+    }
   }
 
   /// (en) Restore this object from the dictionary.

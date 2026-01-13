@@ -1,8 +1,13 @@
 part of 'app_state_impl.dart';
 
+/// A listener that returns a reference value for a key for debugging purposes.
+typedef RefDebugListener = void Function(RefSlot key, dynamic ref);
+
 class RefAppState extends SimpleAppState {
   static const String className = "RefAppState";
-  static const String version = "2";
+  static const String version = "3";
+
+  RefDebugListener? _refDebugListener;
 
   /// * [data]: The initial value of the managed state.
   /// This can usually be null.
@@ -83,11 +88,27 @@ class RefAppState extends SimpleAppState {
   }
 
   /// (en) This method is not available for this class.
+  /// Use setRefDebugListener instead of this method.
   ///
   /// (ja) このクラスではこのメソッドは使用できません。
+  /// このメソッドの代わりにsetRefDebugListenerを使用してください。
   @override
   void setDebugListener(DebugListener? listener) {
     throw UnimplementedError();
+  }
+
+  /// (en) Adds a debug listener for developers.
+  /// This listener will notify you of any value changes whenever they are made.
+  /// Please note that this means that any intermediate changes to values
+  /// will be tracked during batch processing, etc.
+  ///
+  /// (ja) 開発者用のデバッグリスナを追加します。
+  /// このリスナは、何らかの値が変更された際に常に値の変更を通知します。
+  /// このため、バッチ処理などでは値の途中変更が全て追跡されることに注意してください。
+  ///
+  /// * [listener] : Listener for debug use.
+  void setRefDebugListener(RefDebugListener? listener) {
+    _refDebugListener = listener;
   }
 
   /// (en) Retrieves the value associated with the specified key.
@@ -144,7 +165,13 @@ class RefAppState extends SimpleAppState {
       throw StateError('RefSlot "${key.name}" is not initialized');
     }
     _data[key.name] = value;
+    // 参照値用のデバッグリスナに通知。
+    _refDebugListener?.call(key, value);
     _notify(key);
+    // バッチ処理中でなければ_stateListenerに通知する。
+    if (!_isBatch) {
+      _flushStateListener();
+    }
   }
 
   /// (en) This method is not available for this class.
@@ -165,10 +192,15 @@ class RefAppState extends SimpleAppState {
   /// to update.
   /// In other words, the screen the user currently has open is automatically
   /// updated.
+  /// Note that this operation deep copies the data to support Undo and Redo.
+  /// If any data cannot be deep copied, a runtime error will be thrown.
   ///
   /// (ja) Undo操作などで、現在のリスナを保持したままデータだけを入れ替えます。
   /// その後、更新のために全てのUIリスナにバッチ処理で通知が送られます。
   /// つまり、ユーザーが現在開いている画面に関して自動更新が行われます。
+  /// Undo、Redoへの対応のため、この操作ではデータがディープコピーされることに
+  /// 注意してください。
+  /// ディープコピーできないデータがある場合は実行時エラーがスローされます。
   ///
   /// * [other] : Source data to deep copy.
   /// * [notifyListeners] : If false, this method will not notify listeners,

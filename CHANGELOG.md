@@ -1,3 +1,15 @@
+## 0.0.15
+
+* Separated UI listener notifications from state commit notifications.
+  State listeners (used for Undo/Redo, persistence, etc.) are now guaranteed
+  to be called exactly once per logical state change.
+* UI-less state changes no longer trigger unnecessary UI notification flushes.
+* Clarified the behavior and deep-copy requirements of `replaceDataFrom`
+  in the documentation.
+* Added `RefDebugListener` to `RefAppState`, allowing developers to observe
+  reference value changes directly, without the old/new semantics used by
+  `DebugListener`.
+
 ## 0.0.14
 
 * `RefSlot` is now exported as a public API type (`simple_app_state.RefSlot`),
