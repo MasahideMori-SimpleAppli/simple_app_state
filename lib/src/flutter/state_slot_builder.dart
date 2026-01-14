@@ -19,7 +19,7 @@ class StateSlotBuilder extends SlotStatefulWidget {
   List<StateSlot> get slots => slotList;
 
   @override
-  State<StateSlotBuilder> createState() => _StateSlotBuilderState();
+  SlotState<StateSlotBuilder> createState() => _StateSlotBuilderState();
 }
 
 class _StateSlotBuilderState extends SlotState<StateSlotBuilder> {

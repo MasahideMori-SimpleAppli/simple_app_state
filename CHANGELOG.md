@@ -1,3 +1,13 @@
+## 0.0.16
+
+* Enforced the `SlotState` contract at the type level for `SlotStatefulWidget`.
+  Widgets extending `SlotStatefulWidget` must now return a `SlotState` from
+  `createState()`, preventing accidental use of incompatible `State` classes.
+* Updated `StateSlotBuilder` to comply with the new `SlotStatefulWidget`
+  type contract.
+* No runtime behavior changes; this release only strengthens compile-time
+  safety and API correctness.
+
 ## 0.0.15
 
 * Separated UI listener notifications from state commit notifications.

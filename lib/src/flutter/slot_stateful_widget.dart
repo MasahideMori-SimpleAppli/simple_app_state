@@ -14,6 +14,9 @@ abstract class SlotStatefulWidget extends StatefulWidget {
   /// the slot you set here.
   /// (ja) ここで設定したスロットと自動的に紐付いて画面が更新されます。
   List<StateSlot> get slots;
+
+  @override
+  SlotState<SlotStatefulWidget> createState();
 }
 
 abstract class SlotState<T extends SlotStatefulWidget> extends State<T> {
