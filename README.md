@@ -140,3 +140,6 @@ limitations under the License.
 
 - “Dart” and “Flutter” are trademarks of Google LLC.  
   *This package is not developed or endorsed by Google LLC.*
+
+- GitHub and the GitHub logo are trademarks of GitHub, Inc.  
+  *This package is not affiliated with GitHub, Inc.*
