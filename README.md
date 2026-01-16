@@ -90,7 +90,7 @@ SimpleAppState is especially suited for:
 
 ## Support
 
-This package is developed and maintained by me personally as an open-source project.
+This package is developed and maintained by me personally as an open-source project.  
 For bug reports and feature requests, please use GitHub Issues.
 
 If you need **paid support, consulting, or custom development**  
