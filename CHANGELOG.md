@@ -1,3 +1,7 @@
+## 0.0.17
+
+* The sample code has been updated to be more practical.
+
 ## 0.0.16
 
 * Enforced the `SlotState` contract at the type level for `SlotStatefulWidget`.

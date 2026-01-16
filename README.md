@@ -61,7 +61,7 @@ class CounterView extends SlotStatefulWidget {
   List<StateSlot> get slots => [count];
 
   @override
-  State<CounterView> createState() => _CounterViewState();
+  SlotState<CounterView> createState() => _CounterViewState();
 }
 
 class _CounterViewState extends SlotState<CounterView> {
