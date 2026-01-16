@@ -1,6 +1,8 @@
 ## 0.0.17
 
 * The sample code has been updated to be more practical.
+* Readme has been updated.
+* No runtime behavior changes.
 
 ## 0.0.16
 

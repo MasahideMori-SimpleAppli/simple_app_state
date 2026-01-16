@@ -90,8 +90,15 @@ SimpleAppState is especially suited for:
 
 ## Support
 
-There is no support for this package, but if you find any bugs please report them.  
-This package will be fixed with high priority.
+This package is developed and maintained by me personally as an open-source project.
+For bug reports and feature requests, please use GitHub Issues.
+
+If you need **paid support, consulting, or custom development**  
+(e.g. priority support, design advice, or implementation help),
+please contact my company:
+
+**SimpleAppli Inc.**  
+https://simpleappli.com/en/index_en.html
 
 ---
 
