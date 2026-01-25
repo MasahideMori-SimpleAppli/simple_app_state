@@ -1,3 +1,15 @@
+## 0.1.0
+
+### Breaking changes
+
+* Removed the internal equality short-circuit from `SimpleAppState.set`.
+  `set()` now always commits a logical state change and notifies listeners,
+  even if the new value is equal to the previous value.
+
+  This change removes inconsistent behavior between primitive and
+  collection types and clarifies that `set()` represents a logical state
+  update rather than a value-diff operation.
+
 ## 0.0.18
 
 * Readme has been updated.

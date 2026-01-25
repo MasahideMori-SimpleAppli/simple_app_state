@@ -27,7 +27,7 @@ class SimpleAppState extends CloneableFile
     with _AppStateInternals
     implements AppStateProtocol {
   static const String className = "SimpleAppState";
-  static const String version = "8";
+  static const String version = "10";
 
   // The following are temporary parameters that cannot be deep copied (cloned):
   final Map<StateSlot, List<_ListenerEntry>> _uiListeners = {};
@@ -260,7 +260,6 @@ class SimpleAppState extends CloneableFile
       throw StateError('StateSlot "${key.name}" is not initialized');
     }
     final oldValue = _data[key.name] as T;
-    if (oldValue == value) return;
     // 型チェック
     UtilCopy.validateJsonableOrClonableFile<T>(
       value,
