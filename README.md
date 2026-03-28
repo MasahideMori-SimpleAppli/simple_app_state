@@ -29,28 +29,65 @@ SimpleAppState is a Flutter state management library designed for teams
 that value **explicit state ownership, predictable rebuilds,
 and long-term maintainability**.
 
-> State is global and explicit.  
-> Widgets declare which state they depend on.
-
-📘 Full documentation  
+📘 Full documentation
 https://masahidemori-simpleappli.github.io/simple_app_state_docs/
 
 ---
 
-## What makes it different?
+## The core idea: slot boundaries
 
-SimpleAppState is built around three ideas:
+The central concept of SimpleAppState is the **slot boundary**.
 
-- **Application state lives in one place** (`SimpleAppState`)
-- **Widgets subscribe to state, but never own it**
-- **Rebuilds are explicit and predictable**
+A slot boundary is the explicit declaration of which state a widget is allowed to depend on.
+In SimpleAppState, every widget declares this boundary upfront:
 
-There is no context-based lookup, no hidden dependency graph,
-and no widget-owned application state.
+```dart
+class UserScreen extends SlotStatefulWidget {
+  @override
+  List<StateSlot> get slots => [
+    userSlot,
+    settingsSlot,
+  ];
+
+  @override
+  SlotState<UserScreen> createState() => _UserScreenState();
+}
+```
+
+This declaration answers three questions at a glance:
+
+- **What state does this screen depend on?**
+- **What will trigger a rebuild?**
+- **What is this widget allowed to touch?**
+
+Everything outside the declared slots is, by design, out of scope.
 
 ---
 
-## Tiny example
+## What slot boundaries give you
+
+**Predictable rebuilds**
+Widgets only rebuild when their declared slots change.
+There are no hidden subscriptions, no context lookups,
+and no "why did this rebuild?" mysteries.
+
+**Clear ownership**
+Application state lives in `SimpleAppState`, not in widgets.
+Widgets subscribe to state, but never own it.
+
+**Safe task delegation**
+When assigning a screen to a developer or an AI,
+the slot boundary makes the allowed state surface explicit.
+Implementers cannot accidentally couple a widget to unrelated state.
+
+**Explicit dependencies**
+All state dependencies appear in one place —
+the `slots` getter.
+No scattered `watch` calls, no implicit subscriptions.
+
+---
+
+## Quick example
 
 ```dart
 final appState = SimpleAppState();
@@ -67,13 +104,55 @@ class CounterView extends SlotStatefulWidget {
 class _CounterViewState extends SlotState<CounterView> {
   @override
   Widget build(BuildContext context) {
-    final value = count.get();
-    return Text('Count: $value');
+    return TextButton(
+      onPressed: () => count.update((v) => v + 1),
+      child: Text('Count: ${count.get()}'),
+    );
   }
 }
 ```
 
-Widgets rebuild only when their declared slots change.
+---
+
+## State models
+
+**SimpleAppState** — the default state model.
+Values are always deep-copied on get and set,
+preventing accidental mutation.
+Supports serialization, undo/redo, and persistence.
+
+**RefAppState** — for large or non-serializable objects.
+Values are stored and returned as references (no copying).
+Designed for 3D/2D scene graphs, document trees, and other
+performance-critical objects that are expensive to clone.
+
+---
+
+## Coordinating multiple states
+
+When a single user action updates slots across multiple state instances,
+use **AppStateGroup** to keep batch updates synchronized:
+
+```dart
+final appState = SimpleAppState();
+final refState = RefAppState();
+final group = AppStateGroup([appState, refState]);
+
+appState.batch(() {
+  valueSlot.set(42);
+  refSlot.set(newObject);
+});
+// UI listeners across both states are notified exactly once.
+```
+
+States can also join a group individually:
+
+```dart
+appState.joinGroup(group);
+refState.joinGroup(group);
+```
+
+Once grouped, calling `batch` on any member coordinates all members.
 
 ---
 
@@ -82,22 +161,22 @@ Widgets rebuild only when their declared slots change.
 SimpleAppState is especially suited for:
 
 - Medium to large Flutter apps
-- Teams with multiple developers
+- Teams with multiple developers or mixed experience levels
 - Projects that need undo/redo, persistence, or testing
-- Codebases where **“why did this rebuild?” must always be answerable**
+- Codebases where **"why did this rebuild?" must always be answerable**
 
 ---
 
 ## Support
 
-This package is developed and maintained by me personally as an open-source project.  
+This package is developed and maintained by me personally as an open-source project.
 For bug reports and feature requests, please use GitHub Issues.
 
-If you need **paid support, consulting, or custom development**  
+If you need **paid support, consulting, or custom development**
 (e.g. priority support, design advice, or implementation help),
 please contact my company:
 
-**SimpleAppli Inc.**  
+**SimpleAppli Inc.**
 https://simpleappli.com/en/index_en.html
 
 ---
@@ -138,8 +217,8 @@ limitations under the License.
 
 ## Trademarks
 
-- “Dart” and “Flutter” are trademarks of Google LLC.  
+- "Dart" and "Flutter" are trademarks of Google LLC.
   *This package is not developed or endorsed by Google LLC.*
 
-- GitHub and the GitHub logo are trademarks of GitHub, Inc.  
+- GitHub and the GitHub logo are trademarks of GitHub, Inc.
   *This package is not affiliated with GitHub, Inc.*
