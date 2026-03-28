@@ -37,6 +37,9 @@ class SimpleAppState extends CloneableFile
   // Flag indicating whether a batch is currently being processed.
   bool _isBatch = false;
 
+  // The group this state belongs to (for coordinated batch processing).
+  AppStateGroup? _group;
+
   // A flag that marks when a logical "change has occurred."
   bool _hasPendingCommit = false;
 
@@ -305,7 +308,7 @@ class SimpleAppState extends CloneableFile
   /// コールバックされます。
   ///
   /// * [fn] : Multiple set etc. calls that you want to batch together.
-  void batch(void Function() fn) {
+  void _batchSelf(void Function() fn) {
     final wasBatching = _isBatch;
     _isBatch = true;
     try {
@@ -319,6 +322,32 @@ class SimpleAppState extends CloneableFile
         _flushStateListener();
       }
     }
+  }
+
+  /// (en) Joins the given [group] for coordinated batch processing.
+  /// When this state belongs to a group, calling [batch] on any member
+  /// will batch all states in the group together.
+  ///
+  /// (ja) 指定された[group]に参加し、バッチ処理を連動させます。
+  /// グループに属している場合、いずれかのメンバーで[batch]を呼ぶと
+  /// グループ全体がまとめてバッチ処理されます。
+  void joinGroup(AppStateGroup group) {
+    group.add(this);
+  }
+
+  /// (en) Leaves the current group.
+  ///
+  /// (ja) 現在のグループから離脱します。
+  void leaveGroup() {
+    _group?.remove(this);
+  }
+
+  void batch(void Function() fn) {
+    if (_group != null) {
+      _group!.batch(fn);
+      return;
+    }
+    _batchSelf(fn);
   }
 
   /// (en) Notifies registered listeners of a state change.

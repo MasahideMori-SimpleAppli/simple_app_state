@@ -6,3 +6,4 @@ import 'package:simple_app_state/src/core/util_copy.dart';
 part 'simple_app_state_core.dart';
 part 'ref_app_state.dart';
 part 'app_state_internals.dart';
+part 'app_state_group.dart';

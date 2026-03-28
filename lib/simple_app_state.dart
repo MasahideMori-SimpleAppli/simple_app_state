@@ -2,6 +2,7 @@ export 'src/core/app_state_impl.dart'
     show
         SimpleAppState,
         RefAppState,
+        AppStateGroup,
         DebugListener,
         StateListener,
         RefDebugListener;

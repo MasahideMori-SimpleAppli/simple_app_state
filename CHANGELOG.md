@@ -1,3 +1,11 @@
+## 0.2.0
+
+* Added `AppStateGroup` class for coordinated batch processing.
+  Multiple `SimpleAppState` and `RefAppState` instances can be grouped together;
+  calling `batch()` on any member will batch all members as a unit,
+  ensuring UI listeners and state listeners fire only once across the group.
+* Added `joinGroup(AppStateGroup)` and `leaveGroup()` to `SimpleAppState`.
+
 ## 0.1.0
 
 ### Breaking changes
