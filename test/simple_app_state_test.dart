@@ -120,6 +120,36 @@ void main() {
 
       expect(called, 1);
     });
+
+    test('does not notify subscriber of unmodified slot during batch', () {
+      final state = SimpleAppState();
+      final a = state.slot<int>('a', initial: 0);
+      final b = state.slot<int>('b', initial: 0);
+
+      var calledA = 0;
+      var calledB = 0;
+      state.addUIListener(a, 'x', () => calledA++);
+      state.addUIListener(b, 'y', () => calledB++);
+
+      state.batch(() {
+        a.set(1);
+      });
+
+      expect(calledA, 1);
+      expect(calledB, 0);
+    });
+
+    test('StateListener not called when no slot is modified in batch', () {
+      final state = SimpleAppState();
+      state.slot<int>('a', initial: 0);
+
+      var commitCount = 0;
+      state.setStateListener((_) => commitCount++);
+
+      state.batch(() {});
+
+      expect(commitCount, 0);
+    });
   });
 
   group('StateListener (commit notification)', () {

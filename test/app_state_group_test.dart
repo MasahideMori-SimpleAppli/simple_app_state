@@ -295,6 +295,52 @@ void main() {
     });
   });
 
+  group('AppStateGroup partial slot update', () {
+    test(
+      'does not notify subscriber of unmodified state slot during batch',
+      () {
+        final stateA = SimpleAppState();
+        final stateB = SimpleAppState();
+        AppStateGroup([stateA, stateB]);
+
+        var calledA = 0;
+        var calledB = 0;
+        final slotA = stateA.slot<int>('a', initial: 0);
+        final slotB = stateB.slot<int>('b', initial: 0);
+        stateA.addUIListener(slotA, 'x', () => calledA++);
+        stateB.addUIListener(slotB, 'y', () => calledB++);
+
+        stateA.batch(() {
+          slotA.set(1);
+        });
+
+        expect(calledA, 1);
+        expect(calledB, 0);
+      },
+    );
+
+    test('StateListener not called for unmodified member in group batch', () {
+      final stateA = SimpleAppState();
+      final stateB = SimpleAppState();
+      AppStateGroup([stateA, stateB]);
+
+      var commitA = 0;
+      var commitB = 0;
+      stateA.setStateListener((_) => commitA++);
+      stateB.setStateListener((_) => commitB++);
+
+      final slotA = stateA.slot<int>('a', initial: 0);
+      stateB.slot<int>('b', initial: 0);
+
+      stateA.batch(() {
+        slotA.set(1);
+      });
+
+      expect(commitA, 1);
+      expect(commitB, 0);
+    });
+  });
+
   group('AppStateGroup nested batch', () {
     test('nested group.batch does not double-flush', () {
       final stateA = SimpleAppState();
